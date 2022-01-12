@@ -482,9 +482,6 @@ Return a string representing the node version."
   ;; Call auctex-latexmk setup manually since spacemacs doesn't seem
   ;; to properly do so
   (auctex-latexmk-setup)
-
-  ;; Local configuration
-  (load "~/.spacemacs.local")
   )
 
 (defun dotspacemacs/emacs-custom-settings ()
