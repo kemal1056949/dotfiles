@@ -11,24 +11,9 @@ case $- in
       *) return;;
 esac
 
-# Homebrew for Linux
-if [[ -d "$HOME/.linuxbrew" ]]; then
-    eval "$($HOME/.linuxbrew/bin/brew shellenv)"
-fi
-
 # Sensible bash defaults
 if [[ -f "$HOME/.sensible.bash" ]]; then
     source "$HOME/.sensible.bash"
-fi
-
-# Alias definitions
-if [[ -f "$HOME/.aliases" ]]; then
-    source "$HOME/.aliases"
-fi
-
-# Local alias definitions
-if [[ -f "$HOME/.aliases.local" ]]; then
-    source "$HOME/.aliases.local"
 fi
 
 # Set dircolors
@@ -49,12 +34,18 @@ man() {
         man "$@"
 }
 
-# Use Vim as the default text editor (useful when using Git)
-export EDITOR=vim
+# Homebrew for Linux
+if [[ -d "$HOME/.linuxbrew" ]]; then
+    eval "$($HOME/.linuxbrew/bin/brew shellenv)"
+else
+    echo "homebrew for linux isn't installed" >&2
+fi
 
 # Disable flow control. This enables Ctrl+s to open file in horizontal split
 # when using Command-T in Vim
 stty -ixon
+
+##### Set environment variables #####
 
 # Local binary; used by pipx, etc.
 export PATH="$HOME/.local/bin:$PATH"
@@ -68,14 +59,20 @@ if hash powerline-shell 2>/dev/null; then
     if [[ $TERM != linux && ! $PROMPT_COMMAND =~ _update_ps1 ]]; then
         PROMPT_COMMAND="_update_ps1; $PROMPT_COMMAND"
     fi
+else
+    echo "powerline-shell isn't installed" >&2
 fi
 
 if hash bat 2>/dev/null; then
     export BAT_THEME="Solarized (dark)"
+else
+    echo "bat isn't installed" >&2
 fi
 
 if [[ -f "$HOME/.fzf.bash" ]]; then
     source "$HOME/.fzf.bash"
+else
+    echo "fzf bash completion isn't installed" >&2
 fi
 
 if hash fzf 2>/dev/null && hash fd 2>/dev/null; then
@@ -86,6 +83,29 @@ if hash fzf 2>/dev/null && hash fd 2>/dev/null; then
     _fzf_compgen_dir() {
         fd --type d --follow . "$1"
     }
+else
+    echo "fd isn't installed" >&2
+fi
+
+if hash zoxide 2>/dev/null; then
+    eval "$(zoxide init bash)"
+else
+    echo "zoxide isn't installed"
+fi
+
+##### Aliases #####
+
+if hash exa 2>/dev/null; then
+    alias ls='exa -F'
+    alias ll='exa -lF'
+    alias la='exa -alF'
+    alias lha='exa -alF'
+    alias tree='exa -T'
+else
+    echo "exa isn't installed" >&2
+    alias ls='ls --color=auto'
+    alias ll='ls -lhF --color=auto'
+    alias lha='ls -alhF --color=auto'
 fi
 
 # Local .bashrc
