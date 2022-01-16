@@ -47,8 +47,22 @@ stty -ixon
 
 ##### Set environment variables #####
 
+export PATH
+
+# Prepend to PATH if not there yet
+# Src: https://superuser.com/a/753948
+prepend_path() {
+    for ((i=$#; i>0; i--));
+    do
+        ARG=${!i}
+        if [ -d "$ARG" ] && [[ ":$PATH:" != *":$ARG:"* ]]; then
+            PATH="$ARG${PATH:+":$PATH"}"
+        fi
+    done
+}
+
 # Local binary; used by pipx, etc.
-export PATH="$HOME/.local/bin:$PATH"
+prepend_path "$HOME/.local/bin"
 
 # Prompt string configuration
 _update_ps1() {
