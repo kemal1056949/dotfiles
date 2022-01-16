@@ -51,7 +51,7 @@ stty -ixon
 export PATH="$HOME/.local/bin:$PATH"
 
 # Prompt string configuration
-function _update_ps1() {
+_update_ps1() {
     PS1=$(powerline-shell $?)
 }
 
@@ -90,7 +90,7 @@ fi
 if hash zoxide 2>/dev/null; then
     eval "$(zoxide init bash)"
 else
-    echo "zoxide isn't installed"
+    echo "zoxide isn't installed" >&2
 fi
 
 ##### Aliases #####
