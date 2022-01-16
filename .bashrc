@@ -45,18 +45,41 @@ fi
 
 ##### Set environment variables #####
 
+export PATH
+export MANPATH
+
+# Prepend to PATH if not there yet
+# Src: https://superuser.com/a/753948
+prepend_path() {
+    for ((i=$#; i>0; i--));
+    do
+        ARG=${!i}
+        if [ -d "$ARG" ] && [[ ":$PATH:" != *":$ARG:"* ]]; then
+            PATH="$ARG${PATH:+":$PATH"}"
+        fi
+    done
+}
+
+# Similar to prepend_path but for MANPATH
+prepend_manpath() {
+    for ((i=$#; i>0; i--));
+    do
+        ARG=${!i}
+        if [ -d "$ARG" ] && [[ ":$MANPATH:" != *":$ARG:"* ]]; then
+            MANPATH="$ARG${MANPATH:+":$MANPATH"}"
+        fi
+    done
+}
+
 # Ensure brew-installed binaries take precedence
 if hash brew 2>/dev/null; then
-    PATH="$(brew --prefix)/bin:$(brew --prefix)/sbin:$PATH"
-    export PATH
+    prepend_path "$(brew --prefix)/bin" "$(brew --prefix)/sbin"
 fi
 
 # Prioritize GNU coreutils
 if hash brew 2>/dev/null && [[ -n "$(brew --prefix coreutils 2>/dev/null)" ]]; then
-    PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
-    MANPATH="$(brew --prefix coreutils)/libexec/gnuman:$MANPATH"
-    export PATH
-    export MANPATH
+    prepend_path "$(brew --prefix coreutils)/libexec/gnubin"
+    prepend_manpath "$(brew --prefix coreutils)/libexec/gnuman"
 else
     echo "brew coreutils isn't installed" >&2
 fi
@@ -69,7 +92,7 @@ else
 fi
 
 # Local binary; used by pipx, etc.
-export PATH="$HOME/.local/bin:$PATH"
+prepend_path "$HOME/.local/bin"
 
 # Setup conda
 if [[ -d "$HOME/miniconda3" ]]; then
@@ -79,15 +102,14 @@ fi
 # Pyenv settings
 if hash pyenv 2>/dev/null; then
     PYENV_ROOT="$HOME/.pyenv"
-    PATH="$PYENV_ROOT/bin:$PATH"
     export PYENV_ROOT
-    export PATH
+    prepend_path "$PYENV_ROOT/bin"
     eval "$(pyenv init --path)"
     eval "$(pyenv init -)"
 fi
 
 # Prompt string configuration
-function _update_ps1() {
+_update_ps1() {
     PS1=$(powerline-shell $?)
 }
 
@@ -136,7 +158,18 @@ else
     echo "zoxide isn't installed"
 fi
 
-##### Aliases #####
+if [[ -d "$HOME/softwares/srilm/bin" ]]; then
+    srilm_home="$HOME/softwares/srilm"
+    prepend_path "$srilm_home/bin" "$srilm_home/bin/macosx"
+    prepend_manpath "$srilm_home/man"
+fi
+
+# NVM
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+##### Aliases/Functions #####
 
 alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
@@ -166,6 +199,36 @@ if hash brew 2>/dev/null && brew ls --versions htop-osx > /dev/null; then
 else
     echo "brew htop isn't installed" >&2
 fi
+
+switch_theme() {
+    target="$1"
+    source=dark
+
+    if [[ $# -lt 1 ]]; then
+        echo "Usage: switch_theme [dark/light]"
+        return 1
+    fi
+    if [[ "$target" = dark ]]; then
+        source=light
+    fi
+
+    # update dircolors
+    dircolors_solarized="$HOME/projects/dotfiles/dircolors-solarized"
+    if [[ -f "$dircolors_solarized/dircolors.ansi-$target" ]]; then
+        dircolors "$dircolors_solarized/dircolors.ansi-$target" >| "$HOME/.dircolors"
+        source "$HOME/.dircolors"
+    else
+        echo "dircolors-solarized not found; not setting dircolors to ANSI $target" >&2
+    fi
+
+    # update powerline-shell theme
+    powerline_conf="$HOME/.config/powerline-shell/config.json"
+    if [[ -f "$powerline_conf" ]]; then
+        sed -i "" "/theme/s/_$source/_$target/" "$powerline_conf"
+    else
+        echo "powerline-shell config not found; not changing powerline theme" >&2
+    fi
+}
 
 # Local .bashrc
 if [[ -e "$HOME/.bashrc.local" ]]; then
