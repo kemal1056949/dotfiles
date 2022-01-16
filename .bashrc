@@ -155,7 +155,7 @@ fi
 if hash zoxide 2>/dev/null; then
     eval "$(zoxide init bash)"
 else
-    echo "zoxide isn't installed"
+    echo "zoxide isn't installed" >&2
 fi
 
 if [[ -d "$HOME/softwares/srilm/bin" ]]; then
@@ -234,7 +234,3 @@ switch_theme() {
 if [[ -e "$HOME/.bashrc.local" ]]; then
     source "$HOME/.bashrc.local"
 fi
-
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
